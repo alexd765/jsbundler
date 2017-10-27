@@ -38,15 +38,24 @@ func walkBody(statements []ast.Statement) {
 	for _, statement := range statements {
 		switch s := statement.(type) {
 		case *ast.ExpressionStatement:
-			switch e := s.Expression.(type) {
-			case *ast.CallExpression:
-				walkCallExpression(e, 0)
-			default:
-				log.Printf("unhandled %T", s.Expression)
-			}
+			walkExpression(s.Expression, 0)
+		case *ast.EmptyStatement:
 		default:
-			log.Printf("unhandled %T", statement)
+			log.Printf("unhandled statement %T", statement)
 		}
+	}
+}
+
+func walkExpression(ex ast.Expression, depth int) {
+	switch e := ex.(type) {
+	case *ast.CallExpression:
+		walkCallExpression(e, depth)
+	case *ast.Identifier:
+		fmt.Printf("%d: %s\n", depth, e.Name)
+	case *ast.NumberLiteral:
+		fmt.Printf("%d: number\n", depth)
+	default:
+		log.Printf("unhandled expression %T", ex)
 	}
 }
 
@@ -63,15 +72,11 @@ func walkCallExpression(ce *ast.CallExpression, depth int) {
 
 	fmt.Printf("%d: with\n", depth+1)
 	for _, arg := range ce.ArgumentList {
-		switch a := arg.(type) {
-		case *ast.CallExpression:
-			walkCallExpression(a, depth+1)
-		default:
-			log.Printf("unhandled %T", arg)
-		}
+		walkExpression(arg, depth+2)
 	}
 }
 
 func walkDotExpression(dot *ast.DotExpression, depth int) {
 	fmt.Printf("%d: %s.\n", depth, dot.Identifier.Name)
+	walkExpression(dot.Left, depth+1)
 }
