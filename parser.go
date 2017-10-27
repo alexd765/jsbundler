@@ -3,6 +3,7 @@ package jsbundler
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/dop251/goja/ast"
 	"github.com/dop251/goja/parser"
@@ -20,14 +21,16 @@ func Parse(js string) (*ast.Program, error) {
 // WalkProgram and print things.
 func WalkProgram(program *ast.Program) {
 	walkDeclarations(program.DeclarationList)
+	fmt.Println()
 	walkBody(program.Body)
+	fmt.Printf("\n\n")
 }
 
 func walkDeclarations(declarations []ast.Declaration) {
 	for _, decl := range declarations {
 		switch d := decl.(type) {
 		case *ast.FunctionDeclaration:
-			fmt.Printf("function: %s\n", d.Function.Name.Name)
+			fmt.Printf("%s()\n", d.Function.Name.Name)
 		default:
 			log.Printf("unhandled declaration: %T", decl)
 		}
@@ -51,32 +54,33 @@ func walkExpression(ex ast.Expression, depth int) {
 	case *ast.CallExpression:
 		walkCallExpression(e, depth)
 	case *ast.Identifier:
-		fmt.Printf("%d: %s\n", depth, e.Name)
+		fmt.Print(e.Name)
 	case *ast.NumberLiteral:
-		fmt.Printf("%d: number\n", depth)
+		fmt.Print("number")
 	default:
 		log.Printf("unhandled expression %T", ex)
 	}
 }
 
 func walkCallExpression(ce *ast.CallExpression, depth int) {
-	fmt.Printf("%d: call \n", depth)
+	fmt.Print("call ")
 	switch ca := ce.Callee.(type) {
 	case *ast.DotExpression:
-		walkDotExpression(ca, depth+1)
+		walkDotExpression(ca, depth)
 	case *ast.Identifier:
-		fmt.Printf("%d: %s\n", depth+1, ca.Name)
+		fmt.Print(ca.Name)
 	default:
-		fmt.Printf("%d: %T\n", depth+1, ce.Callee)
+		log.Printf("undhandled calee %T\n", ce.Callee)
 	}
 
-	fmt.Printf("%d: with\n", depth+1)
+	fmt.Print("() with")
 	for _, arg := range ce.ArgumentList {
-		walkExpression(arg, depth+2)
+		fmt.Printf("\n%s", strings.Repeat("  ", depth+1))
+		walkExpression(arg, depth+1)
 	}
 }
 
 func walkDotExpression(dot *ast.DotExpression, depth int) {
-	fmt.Printf("%d: %s.\n", depth, dot.Identifier.Name)
+	fmt.Printf("%s.", dot.Identifier.Name)
 	walkExpression(dot.Left, depth+1)
 }
