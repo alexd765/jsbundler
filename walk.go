@@ -60,7 +60,7 @@ func walkCallExpression(ce *ast.CallExpression, depth int) {
 	case *ast.Identifier:
 		fmt.Print(ca.Name)
 	default:
-		log.Printf("undhandled calee %T\n", ce.Callee)
+		log.Printf("undhandled callee %T\n", ce.Callee)
 	}
 
 	fmt.Print("() with")
@@ -72,5 +72,5 @@ func walkCallExpression(ce *ast.CallExpression, depth int) {
 
 func walkDotExpression(dot *ast.DotExpression, depth int) {
 	fmt.Printf("%s.", dot.Identifier.Name)
-	walkExpression(dot.Left, depth+1)
+	walkExpression(dot.Left, depth)
 }
