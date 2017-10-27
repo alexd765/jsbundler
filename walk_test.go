@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestParse(t *testing.T) {
+func TestWalkProgram(t *testing.T) {
 	js := `
 		function plus(a,b) {
 			return a+b;
