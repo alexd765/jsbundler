@@ -2,12 +2,11 @@ package callmap
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 )
 
 var (
-	needle = []byte("function")
+	needle = []byte("function ")
 )
 
 // Function describes a javascript function.
@@ -26,12 +25,28 @@ func findFunction(src []byte, offset int) (*Function, error) {
 	if i == -1 {
 		return nil, io.EOF
 	}
+	offset += i + len(needle)
+	function := Function{Start: offset}
 
-	// Fake Data
-	function := Function{
-		Start: offset + i,
-		Name:  fmt.Sprintf("func %d", offset+i),
-		End:   offset + i + 10,
+	i = bytes.IndexByte(src[offset:], '(')
+	if i == -1 {
+		return nil, io.ErrUnexpectedEOF
 	}
-	return &function, nil
+	function.Name = string(bytes.TrimSpace(src[offset : offset+i]))
+	offset += i + 1
+
+	braces := 0
+	for ; offset < len(src); offset++ {
+		switch src[offset] {
+		case '{':
+			braces++
+		case '}':
+			braces--
+			if braces == 0 {
+				function.End = offset
+				return &function, nil
+			}
+		}
+	}
+	return nil, io.ErrUnexpectedEOF
 }

@@ -3,14 +3,14 @@ function plus(a,b) {
   return a+b;
 }
 
-function mul(a,b) {
+function mult(a,b) {
   sum = 0;
 
   for(i=0; i<b; i++) {
 	plus(sum. a);
   }
-  
+
   return sum;
 }
 
-log.console(mul(2,3));
+log.console(mult(2,3));
