@@ -3,12 +3,10 @@ package callmap
 import (
 	"io"
 	"io/ioutil"
-	"sync"
 )
 
 // File describes a javascript file.
 type File struct {
-	mu        *sync.RWMutex
 	functions map[string]*Function
 }
 
@@ -19,7 +17,6 @@ func parseFile(path string) (*File, error) {
 	}
 
 	file := &File{
-		mu:        &sync.RWMutex{},
 		functions: make(map[string]*Function),
 	}
 
@@ -32,9 +29,7 @@ func parseFile(path string) (*File, error) {
 		if err != nil {
 			return nil, err
 		}
-		file.mu.Lock()
 		file.functions[function.Name] = function
-		file.mu.Unlock()
 		offset = function.End
 	}
 
