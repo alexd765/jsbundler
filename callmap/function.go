@@ -50,3 +50,7 @@ func findFunction(src []byte, offset int) (*Function, error) {
 	}
 	return nil, io.ErrUnexpectedEOF
 }
+
+func (fn Function) String() string {
+	return fn.Name + "()"
+}

@@ -21,4 +21,6 @@ func TestAddFile(t *testing.T) {
 	if _, ok := cm.files[multJS].functions["mult"]; !ok {
 		t.Errorf("got %+v; want 'mult' in map", cm.files[multJS].functions)
 	}
+
+	t.Logf("callmap:\n%s", cm)
 }

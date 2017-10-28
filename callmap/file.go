@@ -35,3 +35,11 @@ func parseFile(path string) (*File, error) {
 
 	return file, nil
 }
+
+func (f File) String() string {
+	str := "functions: "
+	for _, fn := range f.functions {
+		str += fn.String() + " "
+	}
+	return str
+}

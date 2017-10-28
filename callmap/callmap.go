@@ -1,6 +1,7 @@
 package callmap
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -30,4 +31,14 @@ func (cm *CallMap) AddFile(path string) error {
 	cm.mu.Unlock()
 
 	return nil
+}
+
+func (cm CallMap) String() string {
+	var str string
+	cm.mu.RLock()
+	for path, file := range cm.files {
+		str += fmt.Sprintf("%s\n\t%s\n", path, file)
+	}
+	cm.mu.RUnlock()
+	return str
 }
