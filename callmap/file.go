@@ -23,8 +23,9 @@ func parseFile(path string) (*File, error) {
 		functions: make(map[string]*Function),
 	}
 
+	var offset int
 	for {
-		function, err := findFunction(src)
+		function, err := findFunction(src, offset)
 		if err == io.EOF {
 			break
 		}
@@ -34,6 +35,7 @@ func parseFile(path string) (*File, error) {
 		file.mu.Lock()
 		file.functions[function.Name] = function
 		file.mu.Unlock()
+		offset = function.End
 	}
 
 	return file, nil
