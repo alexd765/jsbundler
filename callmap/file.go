@@ -1,6 +1,7 @@
 package callmap
 
 import (
+	"bytes"
 	"io"
 	"io/ioutil"
 )
@@ -20,20 +21,55 @@ func parseFile(path string) (*File, error) {
 		functions: make(map[string]*Function),
 	}
 
-	var offset int
-	for {
-		function, err := findFunction(src, offset)
-		if err == io.EOF {
-			break
+	for pos := 0; pos < len(src); pos++ {
+		switch src[pos] {
+		case '/':
+			pos, err = maybeComment(src, pos)
+			if err != nil {
+				return nil, err
+			}
+		case 'f':
+			pos, err = file.maybeFunction(src, pos)
+			if err != nil {
+				return nil, err
+			}
 		}
-		if err != nil {
-			return nil, err
-		}
-		file.functions[function.Name] = function
-		offset = function.End
 	}
 
 	return file, nil
+}
+
+func maybeComment(src []byte, pos int) (int, error) {
+	switch src[pos+1] {
+	case '*':
+		i := bytes.Index(src[pos+2:], []byte("*/"))
+		if i == -1 {
+			return 0, io.ErrUnexpectedEOF
+		}
+		return pos + 2 + i + 1, nil
+	case '/':
+		i := bytes.IndexByte(src[pos+2:], '\n')
+		if i == -1 {
+			return 0, io.ErrUnexpectedEOF
+		}
+		return pos + 2 + i, nil
+	}
+
+	return pos, nil
+}
+
+func (f *File) maybeFunction(src []byte, pos int) (int, error) {
+	if !bytes.HasPrefix(src[pos:], needle) {
+		return pos, nil
+	}
+
+	fn, err := parseFunction(src, pos)
+	if err != nil {
+		return 0, err
+	}
+
+	f.functions[fn.Name] = fn
+	return fn.End, nil
 }
 
 func (f File) String() string {

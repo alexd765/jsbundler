@@ -1,3 +1,4 @@
+// this function bar(){} is in a comment.
 
 function plus(a,b) {
   return a+b;
@@ -12,5 +13,9 @@ function mult(a,b) {
 
   return sum;
 }
+
+/*
+this function foo(){} as well.
+*/
 
 log.console(mult(2,3));

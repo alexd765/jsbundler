@@ -16,35 +16,27 @@ type Function struct {
 	End   int
 }
 
-func findFunction(src []byte, offset int) (*Function, error) {
-	if offset >= len(src) {
-		return nil, io.EOF
-	}
+func parseFunction(src []byte, pos int) (*Function, error) {
+	pos += len(needle)
+	fn := Function{Start: pos}
 
-	i := bytes.Index(src[offset:], needle)
-	if i == -1 {
-		return nil, io.EOF
-	}
-	offset += i + len(needle)
-	function := Function{Start: offset}
-
-	i = bytes.IndexByte(src[offset:], '(')
+	i := bytes.IndexByte(src[pos:], '(')
 	if i == -1 {
 		return nil, io.ErrUnexpectedEOF
 	}
-	function.Name = string(bytes.TrimSpace(src[offset : offset+i]))
-	offset += i + 1
+	fn.Name = string(bytes.TrimSpace(src[pos : pos+i]))
+	pos += i + 1
 
 	braces := 0
-	for ; offset < len(src); offset++ {
-		switch src[offset] {
+	for ; pos < len(src); pos++ {
+		switch src[pos] {
 		case '{':
 			braces++
 		case '}':
 			braces--
 			if braces == 0 {
-				function.End = offset
-				return &function, nil
+				fn.End = pos
+				return &fn, nil
 			}
 		}
 	}
