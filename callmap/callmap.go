@@ -21,7 +21,7 @@ func New() *CallMap {
 
 // AddFile adds a javascript file to the CallMap.
 func (cm *CallMap) AddFile(path string) error {
-	file, err := parseFile(path)
+	file, err := newFile(path)
 	if err != nil {
 		return err
 	}

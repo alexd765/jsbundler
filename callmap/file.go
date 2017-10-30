@@ -9,67 +9,75 @@ import (
 // File describes a javascript file.
 type File struct {
 	functions map[string]*Function
+	src       []byte
+	pos       int
 }
 
-func parseFile(path string) (*File, error) {
+func newFile(path string) (*File, error) {
 	src, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	file := &File{
+	f := &File{
 		functions: make(map[string]*Function),
+		src:       src,
 	}
+	if err := f.parse(); err != nil {
+		return nil, err
+	}
+	return f, nil
+}
 
-	for pos := 0; pos < len(src); pos++ {
-		switch src[pos] {
+func (f *File) parse() error {
+	for ; f.pos < len(f.src); f.pos++ {
+		switch f.src[f.pos] {
 		case '/':
-			pos, err = maybeComment(src, pos)
-			if err != nil {
-				return nil, err
+			if err := f.maybeComment(); err != nil {
+				return err
 			}
 		case 'f':
-			pos, err = file.maybeFunction(src, pos)
-			if err != nil {
-				return nil, err
+			if err := f.maybeFunction(); err != nil {
+				return err
 			}
 		}
 	}
 
-	return file, nil
+	return nil
 }
 
-func maybeComment(src []byte, pos int) (int, error) {
-	switch src[pos+1] {
+func (f *File) maybeComment() error {
+	switch f.src[f.pos+1] {
 	case '*':
-		i := bytes.Index(src[pos+2:], []byte("*/"))
+		i := bytes.Index(f.src[f.pos+2:], []byte("*/"))
 		if i == -1 {
-			return 0, io.ErrUnexpectedEOF
+			return io.ErrUnexpectedEOF
 		}
-		return pos + 2 + i + 1, nil
+		f.pos += 2 + i + 1
 	case '/':
-		i := bytes.IndexByte(src[pos+2:], '\n')
+		i := bytes.IndexByte(f.src[f.pos+2:], '\n')
 		if i == -1 {
-			return 0, io.ErrUnexpectedEOF
+			return io.ErrUnexpectedEOF
 		}
-		return pos + 2 + i, nil
+		f.pos += 2 + i
 	}
 
-	return pos, nil
+	return nil
 }
 
-func (f *File) maybeFunction(src []byte, pos int) (int, error) {
-	if !bytes.HasPrefix(src[pos:], needle) {
-		return pos, nil
+func (f *File) maybeFunction() error {
+	if !bytes.HasPrefix(f.src[f.pos:], needle) {
+		return nil
 	}
 
-	fn, err := parseFunction(src, pos)
+	fn, err := parseFunction(f.src, f.pos)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	f.functions[fn.Name] = fn
-	return fn.End, nil
+	f.pos = fn.End
+	return nil
 }
 
 func (f File) String() string {

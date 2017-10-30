@@ -8,7 +8,7 @@ function mult(a,b) {
   sum = 0;
 
   for(i=0; i<b; i++) {
-	plus(sum. a);
+	sum = plus(sum. a);
   }
 
   return sum;
