@@ -37,25 +37,20 @@ func newFile(path string) (*File, error) {
 func walk(node interface{}) {
 	n := node.(map[string]interface{})
 	switch n["type"] {
+
 	case "AssignmentExpression":
 		walk(n["right"])
+
 	case "BinaryExpression":
 		walk(n["left"])
 		walk(n["right"])
+
 	case "BlockStatement":
 		body := n["body"].([]interface{})
 		for _, n2 := range body {
 			walk(n2)
 		}
-	case "ForStatement":
-		walk(n["init"])
-		walk(n["test"])
-		walk(n["update"])
-		walk(n["body"])
-	case "ReturnStatement":
-		walk(n["argument"])
-	case "ExpressionStatement":
-		walk(n["expression"])
+
 	case "CallExpression":
 		callee := n["callee"].(map[string]interface{})
 		if callee["type"] == "MemberExpression" {
@@ -70,12 +65,30 @@ func walk(node interface{}) {
 		for _, n2 := range arguments {
 			walk(n2)
 		}
+
+	case "ExpressionStatement":
+		walk(n["expression"])
+
+	case "ForStatement":
+		walk(n["init"])
+		walk(n["test"])
+		walk(n["update"])
+		walk(n["body"])
+
 	case "FunctionDeclaration":
 		id := n["id"].(map[string]interface{})
 		fmt.Printf("%s(){\n", id["name"])
 		walk(n["body"])
 		fmt.Printf("}\n")
-	case "Identifier", "NumericLiteral", "UpdateExpression", "MemberExpression":
+
+	case "ReturnStatement":
+		walk(n["argument"])
+
+	case "Identifier",
+		"MemberExpression",
+		"NumericLiteral",
+		"UpdateExpression":
+
 	default:
 		log.Print(n["type"])
 	}
