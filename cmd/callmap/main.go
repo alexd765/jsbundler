@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -13,13 +12,9 @@ func main() {
 		log.Fatal("Error: Needs javascript source files as parameters.")
 	}
 
-	cm := callmap.New()
+	cm := &callmap.Callmap{}
 
 	for i := 1; i < len(os.Args); i++ {
-		if err := cm.AddFile(os.Args[i]); err != nil {
-			log.Fatalf("Failed to add %s: %s", os.Args[i], err)
-		}
+		cm.AddFile(os.Args[i])
 	}
-
-	fmt.Println(cm)
 }
