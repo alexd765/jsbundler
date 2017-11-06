@@ -34,39 +34,30 @@ func newFile(path string) (*File, error) {
 	return &f, nil
 }
 
-func walk(node map[string]interface{}) {
-	switch node["type"] {
+func walk(node interface{}) {
+	n := node.(map[string]interface{})
+	switch n["type"] {
 	case "AssignmentExpression":
-		right := node["right"].(map[string]interface{})
-		walk(right)
+		walk(n["right"])
 	case "BinaryExpression":
-		left := node["left"].(map[string]interface{})
-		walk(left)
-		right := node["right"].(map[string]interface{})
-		walk(right)
+		walk(n["left"])
+		walk(n["right"])
 	case "BlockStatement":
-		body := node["body"].([]interface{})
-		for _, n := range body {
-			n2 := n.(map[string]interface{})
+		body := n["body"].([]interface{})
+		for _, n2 := range body {
 			walk(n2)
 		}
 	case "ForStatement":
-		init := node["init"].(map[string]interface{})
-		walk(init)
-		test := node["test"].(map[string]interface{})
-		walk(test)
-		update := node["update"].(map[string]interface{})
-		walk(update)
-		body := node["body"].(map[string]interface{})
-		walk(body)
+		walk(n["init"])
+		walk(n["test"])
+		walk(n["update"])
+		walk(n["body"])
 	case "ReturnStatement":
-		argument := node["argument"].(map[string]interface{})
-		walk(argument)
+		walk(n["argument"])
 	case "ExpressionStatement":
-		node2 := node["expression"].(map[string]interface{})
-		walk(node2)
+		walk(n["expression"])
 	case "CallExpression":
-		callee := node["callee"].(map[string]interface{})
+		callee := n["callee"].(map[string]interface{})
 		if callee["type"] == "MemberExpression" {
 			object := callee["object"].(map[string]interface{})
 			property := callee["property"].(map[string]interface{})
@@ -75,19 +66,17 @@ func walk(node map[string]interface{}) {
 		if callee["type"] == "Identifier" {
 			fmt.Printf("call %s()\n", callee["name"])
 		}
-		nodes := node["arguments"].([]interface{})
-		for _, n := range nodes {
-			n2 := n.(map[string]interface{})
+		arguments := n["arguments"].([]interface{})
+		for _, n2 := range arguments {
 			walk(n2)
 		}
 	case "FunctionDeclaration":
-		id := node["id"].(map[string]interface{})
+		id := n["id"].(map[string]interface{})
 		fmt.Printf("%s(){\n", id["name"])
-		body := node["body"].(map[string]interface{})
-		walk(body)
+		walk(n["body"])
 		fmt.Printf("}\n")
 	case "Identifier", "NumericLiteral", "UpdateExpression", "MemberExpression":
 	default:
-		log.Print(node["type"])
+		log.Print(n["type"])
 	}
 }
