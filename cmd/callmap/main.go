@@ -15,6 +15,6 @@ func main() {
 	cm := &callmap.Callmap{}
 
 	for i := 1; i < len(os.Args); i++ {
-		cm.AddFile(os.Args[i])
+		cm.Add(os.Args[i])
 	}
 }
