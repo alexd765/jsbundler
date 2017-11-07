@@ -7,13 +7,7 @@ import (
 	"os/exec"
 )
 
-type File struct {
-	Program Program
-}
-
-type Program struct {
-	Body []map[string]interface{} `json:"body"`
-}
+type File struct{}
 
 func newFile(path string) (*File, error) {
 	out, err := exec.Command("babylon", path).CombinedOutput()
@@ -22,19 +16,23 @@ func newFile(path string) (*File, error) {
 		return nil, err
 	}
 
-	var f File
-	if err := json.Unmarshal(out, &f); err != nil {
+	var ast interface{}
+	if err := json.Unmarshal(out, &ast); err != nil {
 		return nil, err
 	}
+	walk(ast)
 
-	for _, node := range f.Program.Body {
-		walk(node)
-	}
-
-	return &f, nil
+	return nil, nil
 }
 
 func walk(node interface{}) {
+	if nodes, ok := node.([]interface{}); ok {
+		for _, n := range nodes {
+			walk(n)
+		}
+		return
+	}
+
 	n := node.(map[string]interface{})
 	switch n["type"] {
 
@@ -46,10 +44,7 @@ func walk(node interface{}) {
 		walk(n["right"])
 
 	case "BlockStatement":
-		body := n["body"].([]interface{})
-		for _, n2 := range body {
-			walk(n2)
-		}
+		walk(n["body"])
 
 	case "CallExpression":
 		callee := n["callee"].(map[string]interface{})
@@ -61,13 +56,13 @@ func walk(node interface{}) {
 		if callee["type"] == "Identifier" {
 			fmt.Printf("call %s()\n", callee["name"])
 		}
-		arguments := n["arguments"].([]interface{})
-		for _, n2 := range arguments {
-			walk(n2)
-		}
+		walk(n["arguments"])
 
 	case "ExpressionStatement":
 		walk(n["expression"])
+
+	case "File":
+		walk(n["program"])
 
 	case "ForStatement":
 		walk(n["init"])
@@ -80,6 +75,9 @@ func walk(node interface{}) {
 		fmt.Printf("%s(){\n", id["name"])
 		walk(n["body"])
 		fmt.Printf("}\n")
+
+	case "Program":
+		walk(n["body"])
 
 	case "ReturnStatement":
 		walk(n["argument"])
