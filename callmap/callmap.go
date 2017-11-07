@@ -1,44 +1,35 @@
 package callmap
 
 import (
-	"fmt"
-	"sync"
+	"io/ioutil"
+	"log"
+	"os"
 )
 
-// CallMap is a map which javascript function calls another.
-type CallMap struct {
-	mu    *sync.RWMutex
-	files map[string]*File
-}
+// The Callmap stores nothing yet.
+type Callmap struct{}
 
-// New creates an itialized CallMap.
-func New() *CallMap {
-	return &CallMap{
-		mu:    &sync.RWMutex{},
-		files: make(map[string]*File),
-	}
-}
-
-// AddFile adds a javascript file to the CallMap.
-func (cm *CallMap) AddFile(path string) error {
-	file, err := newFile(path)
+// Add a javascript file ora directory to the callmap.
+func (c *Callmap) Add(path string) error {
+	log.Printf("adding '%s'", path)
+	fi, err := os.Stat(path)
 	if err != nil {
 		return err
 	}
-
-	cm.mu.Lock()
-	cm.files[path] = file
-	cm.mu.Unlock()
-
-	return nil
+	if fi.IsDir() {
+		return c.addDir(path)
+	}
+	_, err = newFile(path)
+	return err
 }
 
-func (cm CallMap) String() string {
-	var str string
-	cm.mu.RLock()
-	for path, file := range cm.files {
-		str += fmt.Sprintf("%s\n\t%s\n", path, file)
+func (c *Callmap) addDir(path string) error {
+	fis, err := ioutil.ReadDir(path)
+	if err != nil {
+		return err
 	}
-	cm.mu.RUnlock()
-	return str
+	for _, fi := range fis {
+		c.Add(fi.Name())
+	}
+	return nil
 }
