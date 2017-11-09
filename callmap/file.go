@@ -10,6 +10,7 @@ import (
 type File struct{}
 
 func newFile(path string) (*File, error) {
+	log.Printf("adding '%s'", path)
 	out, err := exec.Command("babylon", path).CombinedOutput()
 	if err != nil {
 		log.Printf("err: %s", out)
@@ -35,6 +36,7 @@ func walk(node interface{}) {
 
 	n, ok := node.(map[string]interface{})
 	if !ok {
+		log.Printf("unexpected node: %+v:", node)
 		return
 	}
 	switch n["type"] {

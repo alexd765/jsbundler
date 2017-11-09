@@ -15,6 +15,8 @@ func main() {
 	cm := &callmap.Callmap{}
 
 	for i := 1; i < len(os.Args); i++ {
-		cm.Add(os.Args[i])
+		if err := cm.Add(os.Args[i]); err != nil {
+			log.Fatalf("Error: %s", err)
+		}
 	}
 }
