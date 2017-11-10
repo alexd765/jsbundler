@@ -27,6 +27,10 @@ func newFile(path string) (*File, error) {
 }
 
 func walk(node interface{}) {
+	if node == nil {
+		return
+	}
+
 	if nodes, ok := node.([]interface{}); ok {
 		for _, n := range nodes {
 			walk(n)
@@ -119,6 +123,24 @@ func walk(node interface{}) {
 		fmt.Printf("%s(){\n", id["name"])
 		walk(n["body"])
 		fmt.Printf("}\n")
+
+	case "ImportDeclaration":
+		fmt.Print("import ")
+		walk(n["specifiers"])
+		source := n["source"].(map[string]interface{})
+		fmt.Printf("from %s\n", source["value"])
+
+	case "ImportDefaultSpecifier":
+		local := n["local"].(map[string]interface{})
+		fmt.Printf("%s ", local["name"])
+
+	case "ImportNamespaceSpecifier":
+		local := n["local"].(map[string]interface{})
+		fmt.Printf("* as %s ", local["name"])
+
+	case "ImportSpecifier":
+		imported := n["imported"].(map[string]interface{})
+		fmt.Printf("{%s} ", imported["name"])
 
 	case "IfStatement":
 		walk(n["test"])
@@ -219,6 +241,7 @@ func walk(node interface{}) {
 		"ForOfStatement",
 		"DebuggerStatement",
 		"Identifier",
+		"NullLiteral",
 		"NumericLiteral",
 		"StringLiteral":
 
