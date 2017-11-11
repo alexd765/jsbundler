@@ -101,6 +101,18 @@ func walk(node interface{}) {
 		walk(n["body"])
 		walk(n["test"])
 
+	case "ExportAllDeclaration":
+		fmt.Print("export *")
+		walk(n["declaration"])
+
+	case "ExportDefaultDeclaration":
+		fmt.Print("export default ")
+		walk(n["declaration"])
+
+	case "ExportNamedDeclaration":
+		fmt.Print("export ")
+		walk(n["declaration"])
+
 	case "ExpressionStatement":
 		walk(n["expression"])
 
