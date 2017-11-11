@@ -2,6 +2,7 @@ package ast
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 )
 
@@ -51,6 +52,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		if err := json.Unmarshal(b, &tmp2); err != nil {
 			return err
 		}
+		n.Name = tmp2.Callee.Name
 		n.Children = tmp2.Arguments
 
 	case "ExpressionStatement":
@@ -111,6 +113,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		if err := json.Unmarshal(b, &tmp2); err != nil {
 			return err
 		}
+		n.Name = fmt.Sprintf("%s.%s", tmp2.Object.Name, tmp2.Property.Name)
 		n.Children = []*Node{tmp2.Object, tmp2.Property}
 
 	case "ReturnStatement", "UpdateExpression":
