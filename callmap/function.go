@@ -5,13 +5,14 @@ import "github.com/alexd765/jsbundler/ast"
 // Function is a function declaration.
 type Function struct {
 	Calls     []Call
-	Functions []Function
+	Functions map[string]*Function
 	Name      string
 }
 
 func newFunction(ast *ast.Node) *Function {
 	fn := &Function{
-		Name: ast.Name,
+		Name:      ast.Name,
+		Functions: make(map[string]*Function),
 	}
 	fn.walk(ast)
 	return fn
@@ -34,7 +35,8 @@ func (fn *Function) walk(ast *ast.Node) {
 				}
 				fn.Calls = append(fn.Calls, Call{Name: node.Name, From: node.From})
 			case "FunctionDeclaration":
-				fn.Functions = append(fn.Functions, *newFunction(node))
+				childFn := newFunction(node)
+				fn.Functions[childFn.Name] = childFn
 			}
 		}
 	}

@@ -5,7 +5,7 @@ import "github.com/alexd765/jsbundler/ast"
 // File descibes a javascript file.
 type File struct {
 	Calls     []Call
-	Functions []Function
+	Functions map[string]*Function
 	Imports   []Import
 }
 
@@ -15,7 +15,9 @@ func newFile(path string) (*File, error) {
 		return nil, err
 	}
 
-	f := &File{}
+	f := &File{
+		Functions: make(map[string]*Function),
+	}
 	f.walk(ast)
 
 	return f, nil
@@ -37,7 +39,8 @@ func (f *File) walk(ast *ast.Node) {
 			}
 			f.Calls = append(f.Calls, Call{Name: node.Name, From: node.From})
 		case "FunctionDeclaration":
-			f.Functions = append(f.Functions, *newFunction(node))
+			fn := newFunction(node)
+			f.Functions[fn.Name] = fn
 		case "ImportDeclaration":
 			f.Imports = append(f.Imports, Import{Name: node.Name, From: node.From})
 		}
