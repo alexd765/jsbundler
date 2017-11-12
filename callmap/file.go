@@ -7,8 +7,6 @@ type File struct {
 	Calls     []Call
 	Functions []Function
 	Imports   []Import
-
-	types map[string]struct{}
 }
 
 func newFile(path string) (*File, error) {
@@ -17,20 +15,20 @@ func newFile(path string) (*File, error) {
 		return nil, err
 	}
 
-	f := &File{
-		types: map[string]struct{}{
-			"CallExpression":      struct{}{},
-			"FunctionDeclaration": struct{}{},
-			"ImportDeclaration":   struct{}{},
-		},
-	}
+	f := &File{}
 	f.walk(ast)
 
 	return f, nil
 }
 
+var typesInFile = map[string]struct{}{
+	"CallExpression":      struct{}{},
+	"FunctionDeclaration": struct{}{},
+	"ImportDeclaration":   struct{}{},
+}
+
 func (f *File) walk(ast *ast.Node) {
-	nodes := ast.WalkTo(f.types)
+	nodes := ast.WalkTo(typesInFile)
 	for _, node := range nodes {
 		switch node.Type {
 		case "CallExpression":
