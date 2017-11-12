@@ -7,6 +7,8 @@ type File struct {
 	Calls     []Call
 	Functions []Function
 	Imports   []Import
+
+	types map[string]struct{}
 }
 
 func newFile(path string) (*File, error) {
@@ -15,48 +17,31 @@ func newFile(path string) (*File, error) {
 		return nil, err
 	}
 
-	calls, fns, imports := walk(ast)
-	f := File{
-		Calls:     calls,
-		Functions: fns,
-		Imports:   imports,
+	f := &File{
+		types: map[string]struct{}{
+			"CallExpression":      struct{}{},
+			"FunctionDeclaration": struct{}{},
+			"ImportDeclaration":   struct{}{},
+		},
 	}
+	f.walk(ast)
 
-	return &f, nil
+	return f, nil
 }
 
-var types = map[string]struct{}{
-	"CallExpression":      struct{}{},
-	"FunctionDeclaration": struct{}{},
-	"ImportDeclaration":   struct{}{},
-}
-
-func walk(ast *ast.Node) ([]Call, []Function, []Import) {
-	var calls []Call
-	var fns []Function
-	var imports []Import
-
-	nodes := ast.WalkTo(types)
+func (f *File) walk(ast *ast.Node) {
+	nodes := ast.WalkTo(f.types)
 	for _, node := range nodes {
 		switch node.Type {
 		case "CallExpression":
 			for _, childNode := range node.Children {
-				childCalls, _, _ := walk(childNode)
-				calls = append(calls, childCalls...)
+				f.walk(childNode)
 			}
-			calls = append(calls, Call{Name: node.Name})
+			f.Calls = append(f.Calls, Call{Name: node.Name})
 		case "FunctionDeclaration":
-			fn := Function{Name: node.Name}
-			for _, childNode := range node.Children {
-				childCalls, childFns, _ := walk(childNode)
-				fn.Calls = append(fn.Calls, childCalls...)
-				fn.Functions = append(fn.Functions, childFns...)
-			}
-			fns = append(fns, fn)
+			f.Functions = append(f.Functions, *newFunction(node))
 		case "ImportDeclaration":
-			imports = append(imports, Import{Name: node.Name})
+			f.Imports = append(f.Imports, Import{Name: node.Name})
 		}
 	}
-
-	return calls, fns, imports
 }
