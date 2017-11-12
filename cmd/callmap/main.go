@@ -18,12 +18,9 @@ func main() {
 		log.Fatal("err: Needs javascript source files as parameters.")
 	}
 
-	cm := callmap.New()
-
-	for _, arg := range flag.Args() {
-		if err := cm.Add(arg); err != nil {
-			log.Fatalf("err: %s", err)
-		}
+	cm, err := callmap.New(flag.Args()...)
+	if err != nil {
+		log.Fatalf("err: %s", err)
 	}
 
 	out, err := json.MarshalIndent(cm, "", "  ")

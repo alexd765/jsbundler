@@ -13,49 +13,62 @@ type Callmap struct {
 	Files map[string]*File `json:"files"`
 }
 
-// New returns an ititialized callmap.
-func New() *Callmap {
-	return &Callmap{
-		Files: make(map[string]*File),
-	}
-}
+// New returns an initialized Callmap.
+func New(paths ...string) (*Callmap, error) {
+	var filepaths []string
 
-// Add a javascript file ora directory to the callmap.
-func (c *Callmap) Add(path string) error {
-	fi, err := os.Stat(path)
-	if err != nil {
-		return err
+	for _, p := range paths {
+		childpaths, err := walkPath(p)
+		if err != nil {
+			return nil, err
+		}
+		filepaths = append(filepaths, childpaths...)
 	}
-	if fi.IsDir() {
-		return c.addDir(path)
-	}
-	f, err := newFile(path)
-	if err != nil {
-		return err
-	}
-	c.Files[path] = f
-	return nil
-}
 
-func (c *Callmap) addDir(path string) error {
-	fis, err := ioutil.ReadDir(path)
-	if err != nil {
-		return err
-	}
-	for _, fi := range fis {
-		name := fi.Name()
-		if strings.HasPrefix(name, ".") && name != "." {
-			log.Printf("skipping '%s'", filepath.Join(path, fi.Name()))
-			continue
-		}
-		if ext := filepath.Ext(name); ext != "" && ext != ".js" && ext != ".jsx" {
-			log.Printf("skipping '%s'", filepath.Join(path, fi.Name()))
-			continue
-		}
-		if err := c.Add(filepath.Join(path, fi.Name())); err != nil {
+	log.Printf("found %d javascript files", len(filepaths))
+	files := make(map[string]*File)
+
+	for _, p := range filepaths {
+		file, err := newFile(p)
+		if err != nil {
 			log.Printf("err: %s", err)
 			continue
 		}
+		files[p] = file
 	}
-	return nil
+
+	return &Callmap{files}, nil
+}
+
+func walkPath(path string) ([]string, error) {
+	fi, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if !fi.IsDir() {
+		return []string{path}, nil
+	}
+
+	fis, err := ioutil.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var filepaths []string
+	for _, childFi := range fis {
+		name := childFi.Name()
+		if strings.HasPrefix(name, ".") && name != "." {
+			continue
+		}
+		if ext := filepath.Ext(name); ext != "" && ext != ".js" && ext != ".jsx" {
+			continue
+		}
+		childpaths, err := walkPath(filepath.Join(path, name))
+		if err != nil {
+			return nil, err
+		}
+		filepaths = append(filepaths, childpaths...)
+	}
+
+	return filepaths, nil
 }
