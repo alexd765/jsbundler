@@ -3,7 +3,7 @@ package ast
 import "testing"
 
 func TestWalkTo(t *testing.T) {
-	f, err := ParseFile("../callmap/testfiles/mult.js")
+	f, err := ParseFile("../testdata/mult.js")
 	if err != nil {
 		t.Fatalf("unexpected err: %s", err)
 	}
