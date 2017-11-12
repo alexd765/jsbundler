@@ -22,12 +22,13 @@ func main() {
 	if err != nil {
 		log.Fatalf("err: %s", err)
 	}
+	log.Printf("callmap parsed %d javascript files", len(cm.Files))
 
-	out, err := json.MarshalIndent(cm, "", "  ")
-	if err != nil {
-		log.Fatalf("err: %s", err)
-	}
 	if *v {
+		out, err := json.MarshalIndent(cm, "", "  ")
+		if err != nil {
+			log.Fatalf("err: %s", err)
+		}
 		fmt.Print(string(out))
 	}
 }
