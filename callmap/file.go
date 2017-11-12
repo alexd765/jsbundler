@@ -14,24 +14,45 @@ func newFile(path string) (*File, error) {
 		return nil, err
 	}
 
-	f := File{}
-
-	types := map[string]struct{}{
-		"CallExpression":      struct{}{},
-		"FunctionDeclaration": struct{}{},
+	calls, fns := walk(ast)
+	f := File{
+		Calls:     calls,
+		Functions: fns,
 	}
+
+	return &f, nil
+}
+
+var types = map[string]struct{}{
+	"CallExpression":      struct{}{},
+	"FunctionDeclaration": struct{}{},
+}
+
+func walk(ast *ast.Node) ([]Call, []Function) {
+	var calls []Call
+	var fns []Function
 
 	nodes := ast.WalkTo(types)
 	for _, node := range nodes {
 		switch node.Type {
 		case "CallExpression":
-			f.Calls = append(f.Calls, Call{Name: node.Name})
+			for _, childNode := range node.Children {
+				childCalls, _ := walk(childNode)
+				calls = append(calls, childCalls...)
+			}
+			calls = append(calls, Call{Name: node.Name})
 		case "FunctionDeclaration":
-			f.Functions = append(f.Functions, Function{Name: node.Name})
+			fn := Function{Name: node.Name}
+			for _, childNode := range node.Children {
+				childCalls, childFns := walk(childNode)
+				fn.Calls = append(fn.Calls, childCalls...)
+				fn.Functions = append(fn.Functions, childFns...)
+			}
+			fns = append(fns, fn)
 		}
 	}
 
-	return &f, nil
+	return calls, fns
 }
 
 /*

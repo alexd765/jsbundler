@@ -2,5 +2,7 @@ package callmap
 
 // Function is a function declaration.
 type Function struct {
-	Name string
+	Calls     []Call
+	Functions []Function
+	Name      string
 }
