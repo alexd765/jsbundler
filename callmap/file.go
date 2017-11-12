@@ -4,9 +4,9 @@ import "github.com/alexd765/jsbundler/ast"
 
 // File descibes a javascript file.
 type File struct {
-	Calls     []Call
-	Functions map[string]*Function
-	Imports   []Import
+	Calls     []Call               `json:"calls,omitempty"`
+	Functions map[string]*Function `json:"functions,omitempty"`
+	Imports   []Import             `json:"imports"`
 }
 
 func newFile(path string) (*File, error) {

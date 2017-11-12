@@ -10,7 +10,7 @@ import (
 
 // The Callmap stores nothing yet.
 type Callmap struct {
-	Files map[string]*File
+	Files map[string]*File `json:"files"`
 }
 
 // New returns an ititialized callmap.

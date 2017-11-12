@@ -4,9 +4,9 @@ import "github.com/alexd765/jsbundler/ast"
 
 // Function is a function declaration.
 type Function struct {
-	Calls     []Call
-	Functions map[string]*Function
-	Name      string
+	Calls     []Call               `json:"calls,omitempty"`
+	Functions map[string]*Function `json:"functions,omitempty"`
+	Name      string               `json:"name,omitempty"`
 }
 
 func newFunction(ast *ast.Node) *Function {
