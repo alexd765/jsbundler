@@ -187,7 +187,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		}
 		n.Children = []*Node{tmp2.Init, tmp2.Test, tmp2.Update, tmp2.Body}
 
-	case "FunctionDeclaration":
+	case "FunctionDeclaration", "ObjectMethod":
 		var tmp2 struct {
 			ID   *Node `json:"id"`
 			Body *Node `json:"body"`
@@ -195,7 +195,9 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		if err := json.Unmarshal(b, &tmp2); err != nil {
 			return err
 		}
-		n.Name = tmp2.ID.Name
+		if tmp2.ID != nil {
+			n.Name = tmp2.ID.Name
+		}
 		n.Children = []*Node{tmp2.Body}
 
 	case "FunctionExpression":
@@ -283,7 +285,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		n.From = tmp2.Object.Name
 		n.Children = []*Node{tmp2.Object, tmp2.Property}
 
-	case "AwaitExpression", "ReturnStatement", "SpreadElement", "SpreadProperty", "ThrowStatement", "UnaryExpression", "UpdateExpression", "YieldExpression":
+	case "AwaitExpression", "ReturnStatement", "RestElement", "SpreadElement", "SpreadProperty", "ThrowStatement", "UnaryExpression", "UpdateExpression", "YieldExpression":
 		var tmp2 struct {
 			Argument *Node `json:"argument"`
 		}
@@ -292,7 +294,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		}
 		n.Children = []*Node{tmp2.Argument}
 
-	case "ObjectExpression":
+	case "ObjectExpression", "ObjectPattern":
 		var tmp2 struct {
 			Properties []*Node `json:"properties"`
 		}
@@ -308,8 +310,10 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		if err := json.Unmarshal(b, &tmp2); err != nil {
 			return err
 		}
-		if v, ok := tmp2.Value.(string); ok {
-			n.Name = v
+		if tmp2.Value != nil {
+			if v, ok := tmp2.Value.(string); ok {
+				n.Name = v
+			}
 		}
 
 	case "StringLiteral":
@@ -321,7 +325,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		}
 		n.Name = tmp2.Value
 
-	case "SequenceExpressions", "TemplateLiteral":
+	case "SequenceExpression", "TemplateLiteral":
 		var tmp2 struct {
 			Expressions []*Node `json:"expressions"`
 		}
@@ -418,7 +422,9 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		"JSXEmptyExpression",
 		"DeclareVariable",
 		"RegExpLiteral",
-		"InterfaceDeclaration":
+		"InterfaceDeclaration",
+		"TypeCastExpression",
+		"Super":
 
 	default:
 		log.Printf("unhandled type %s", n.Type)
