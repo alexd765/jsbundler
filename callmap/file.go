@@ -1,263 +1,48 @@
 package callmap
 
-import (
-	"encoding/json"
-	"fmt"
-	"log"
-	"os/exec"
-)
+import "github.com/alexd765/jsbundler/ast"
 
-type File struct{}
-
-func newFile(path string) (*File, error) {
-	log.Printf("adding '%s'", path)
-	out, err := exec.Command("babylon", path).CombinedOutput()
-	if err != nil {
-		log.Printf("err: %s", out)
-		return nil, err
-	}
-
-	var ast interface{}
-	if err := json.Unmarshal(out, &ast); err != nil {
-		return nil, err
-	}
-	walk(ast)
-
-	return nil, nil
+// File descibes a javascript file.
+type File struct {
+	Calls     []Call               `json:"calls,omitempty"`
+	Functions map[string]*Function `json:"functions,omitempty"`
+	Imports   []Import             `json:"imports"`
 }
 
-func walk(node interface{}) {
-	if node == nil {
-		return
+func newFile(path string) (*File, error) {
+	ast, err := ast.ParseFile(path)
+	if err != nil {
+		return nil, err
 	}
 
-	if nodes, ok := node.([]interface{}); ok {
-		for _, n := range nodes {
-			walk(n)
-		}
-		return
+	f := &File{
+		Functions: make(map[string]*Function),
 	}
+	f.walk(ast)
 
-	n, ok := node.(map[string]interface{})
-	if !ok {
-		log.Printf("unexpected node: %+v:", node)
-		return
-	}
-	switch n["type"] {
+	return f, nil
+}
 
-	case "AssignmentExpression":
-		walk(n["left"])
-		walk(n["right"])
+var typesInFile = map[string]struct{}{
+	"CallExpression":      struct{}{},
+	"FunctionDeclaration": struct{}{},
+	"ImportDeclaration":   struct{}{},
+}
 
-	case "ArrayExpression":
-		walk(n["elements"])
-
-	case "ArrowFunctionExpression":
-		walk(n["body"])
-
-	case "AwaitExpression":
-		walk(n["argument"])
-
-	case "BinaryExpression":
-		walk(n["left"])
-		walk(n["right"])
-
-	case "BindExpression":
-		walk(n["object"])
-		walk(n["callee"])
-
-	case "BlockStatement":
-		walk(n["body"])
-
-	case "CallExpression":
-		callee := n["callee"].(map[string]interface{})
-		if callee["type"] == "MemberExpression" {
-			object := callee["object"].(map[string]interface{})
-			property := callee["property"].(map[string]interface{})
-			fmt.Printf("call %s.%s()\n", object["name"], property["name"])
+func (f *File) walk(ast *ast.Node) {
+	nodes := ast.WalkTo(typesInFile)
+	for _, node := range nodes {
+		switch node.Type {
+		case "CallExpression":
+			for _, childNode := range node.Children {
+				f.walk(childNode)
+			}
+			f.Calls = append(f.Calls, Call{Name: node.Name, From: node.From})
+		case "FunctionDeclaration":
+			fn := newFunction(node)
+			f.Functions[fn.Name] = fn
+		case "ImportDeclaration":
+			f.Imports = append(f.Imports, Import{Name: node.Name, From: node.From})
 		}
-		if callee["type"] == "Identifier" {
-			fmt.Printf("call %s()\n", callee["name"])
-		}
-		walk(n["arguments"])
-
-	case "CatchClause":
-		walk(n["param"])
-		walk(n["body"])
-
-	case "Class":
-		walk(n["superClass"])
-		walk(n["body"])
-
-	case "ConditionalExpression":
-		walk(n["test"])
-		walk(n["consequent"])
-		walk(n["alternate"])
-
-	case "DoExpression":
-		walk(n["body"])
-
-	case "DoWhileStatement":
-		walk(n["body"])
-		walk(n["test"])
-
-	case "ExportAllDeclaration":
-		fmt.Print("export *")
-		walk(n["declaration"])
-
-	case "ExportDefaultDeclaration":
-		fmt.Print("export default ")
-		walk(n["declaration"])
-
-	case "ExportNamedDeclaration":
-		fmt.Print("export ")
-		walk(n["declaration"])
-
-	case "ExpressionStatement":
-		walk(n["expression"])
-
-	case "File":
-		walk(n["program"])
-
-	case "ForInStatement":
-		walk(n["left"])
-		walk(n["right"])
-		walk(n["body"])
-
-	case "ForStatement":
-		walk(n["init"])
-		walk(n["test"])
-		walk(n["update"])
-		walk(n["body"])
-
-	case "FunctionDeclaration":
-		id := n["id"].(map[string]interface{})
-		fmt.Printf("%s(){\n", id["name"])
-		walk(n["body"])
-		fmt.Printf("}\n")
-
-	case "ImportDeclaration":
-		fmt.Print("import ")
-		walk(n["specifiers"])
-		source := n["source"].(map[string]interface{})
-		fmt.Printf("from %s\n", source["value"])
-
-	case "ImportDefaultSpecifier":
-		local := n["local"].(map[string]interface{})
-		fmt.Printf("%s ", local["name"])
-
-	case "ImportNamespaceSpecifier":
-		local := n["local"].(map[string]interface{})
-		fmt.Printf("* as %s ", local["name"])
-
-	case "ImportSpecifier":
-		imported := n["imported"].(map[string]interface{})
-		fmt.Printf("{%s} ", imported["name"])
-
-	case "IfStatement":
-		walk(n["test"])
-		walk(n["consequent"])
-		walk(n["alternate"])
-
-	case "LabeledStatement":
-		walk(n["body"])
-
-	case "LogicalExpression":
-		walk(n["left"])
-		walk(n["right"])
-
-	case "MemberExpression":
-		walk(n["object"])
-		walk(n["property"])
-
-	case "NewExpression":
-		callee := n["callee"].(map[string]interface{})
-		if callee["type"] == "MemberExpression" {
-			object := callee["object"].(map[string]interface{})
-			property := callee["property"].(map[string]interface{})
-			fmt.Printf("call %s.%s()\n", object["name"], property["name"])
-		}
-		if callee["type"] == "Identifier" {
-			fmt.Printf("call %s()\n", callee["name"])
-		}
-		walk(n["arguments"])
-
-	case "ObjectExpression":
-		walk(n["properties"])
-
-	case "ObjectProperty":
-		walk(n["value"])
-
-	case "Program":
-		walk(n["body"])
-
-	case "ReturnStatement":
-		walk(n["argument"])
-
-	case "SequenceExpression":
-		walk(n["expressions"])
-
-	case "SpreadElement":
-		walk(n["argument"])
-
-	case "SwitchCase":
-		walk(n["test"])
-		walk(n["consequent"])
-
-	case "SwitchStatement":
-		walk(n["discriminant"])
-		walk(n["cases"])
-
-	case "TaggedTemplateExpression":
-		walk(n["tag"])
-
-	case "TemplateLiteral":
-		walk(n["expressions"])
-
-	case "ThrowStatement":
-		walk(n["argument"])
-
-	case "TryStatement":
-		walk(n["block"])
-		walk(n["handler"])
-		walk(n["finalizer"])
-
-	case "UnaryExpression":
-		walk(n["argument"])
-
-	case "UpdateExpression":
-		walk(n["argument"])
-
-	case "VariableDeclaration":
-		walk(n["declarations"])
-
-	case "VariableDeclarator":
-		walk(n["init"])
-
-	case "WhileStatement":
-		walk(n["test"])
-		walk(n["body"])
-
-	case "WithStatement":
-		walk(n["object"])
-		walk(n["body"])
-
-	case "YieldExpression":
-		walk(n["argument"])
-
-	case
-		"BooleanLiteral",
-		"BreakStatement",
-		"ContinueStatement",
-		"EmptyStatement",
-		"ForOfStatement",
-		"DebuggerStatement",
-		"Identifier",
-		"NullLiteral",
-		"NumericLiteral",
-		"StringLiteral":
-
-	default:
-		log.Print(n["type"])
 	}
 }

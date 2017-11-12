@@ -9,7 +9,16 @@ import (
 )
 
 // The Callmap stores nothing yet.
-type Callmap struct{}
+type Callmap struct {
+	Files map[string]*File `json:"files"`
+}
+
+// New returns an ititialized callmap.
+func New() *Callmap {
+	return &Callmap{
+		Files: make(map[string]*File),
+	}
+}
 
 // Add a javascript file ora directory to the callmap.
 func (c *Callmap) Add(path string) error {
@@ -20,8 +29,12 @@ func (c *Callmap) Add(path string) error {
 	if fi.IsDir() {
 		return c.addDir(path)
 	}
-	_, err = newFile(path)
-	return err
+	f, err := newFile(path)
+	if err != nil {
+		return err
+	}
+	c.Files[path] = f
+	return nil
 }
 
 func (c *Callmap) addDir(path string) error {

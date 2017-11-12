@@ -1,22 +1,36 @@
 package main
 
 import (
+	"encoding/json"
+	"flag"
+	"fmt"
 	"log"
-	"os"
 
 	"github.com/alexd765/jsbundler/callmap"
 )
 
 func main() {
-	if len(os.Args) == 1 {
+
+	v := flag.Bool("v", false, "print the callmap")
+	flag.Parse()
+
+	if len(flag.Args()) == 0 {
 		log.Fatal("Error: Needs javascript source files as parameters.")
 	}
 
-	cm := &callmap.Callmap{}
+	cm := callmap.New()
 
-	for i := 1; i < len(os.Args); i++ {
-		if err := cm.Add(os.Args[i]); err != nil {
+	for _, arg := range flag.Args() {
+		if err := cm.Add(arg); err != nil {
 			log.Fatalf("Error: %s", err)
 		}
+	}
+
+	out, err := json.MarshalIndent(cm, "", "  ")
+	if err != nil {
+		log.Fatalf("Error: %s", err)
+	}
+	if *v {
+		fmt.Print(string(out))
 	}
 }
