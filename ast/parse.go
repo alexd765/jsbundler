@@ -4,13 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os/exec"
 )
 
 // ParseFile parses javascript file and returs the AST.
 func ParseFile(path string) (*Node, error) {
-	log.Printf("adding '%s'", path)
 	out, err := exec.Command("babylon", path).CombinedOutput()
 	if err != nil {
 		start := bytes.Index(out, []byte("Unexpected token"))
