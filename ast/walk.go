@@ -2,6 +2,10 @@ package ast
 
 //WalkTo nodes with an interesting type.
 func (n *Node) WalkTo(types map[string]struct{}) []*Node {
+	if n == nil {
+		return nil
+	}
+
 	if _, ok := types[n.Type]; ok {
 		return []*Node{n}
 	}

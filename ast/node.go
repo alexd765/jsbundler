@@ -25,7 +25,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 
 	switch n.Type {
 
-	case "AssignmentExpression", "BinaryExpression":
+	case "AssignmentExpression", "BinaryExpression", "LogicalExpression":
 		var tmp2 struct {
 			Left  *Node `json:"left"`
 			Right *Node `json:"right"`
@@ -35,7 +35,26 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		}
 		n.Children = []*Node{tmp2.Left, tmp2.Right}
 
-	case "BlockStatement", "Program":
+	case "ArrayExpression":
+		var tmp2 struct {
+			Elements []*Node `json:"elements"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = tmp2.Elements
+
+	case "ArrowFunctionExpression":
+		var tmp2 struct {
+			Params []*Node `json:"params"`
+			Body   *Node   `json:"body"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = append(tmp2.Params, tmp2.Body)
+
+	case "BlockStatement", "DoExpression", "LabeledStatement", "Program":
 		var tmp2 struct {
 			Body []*Node `json:"body"`
 		}
@@ -44,7 +63,17 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		}
 		n.Children = tmp2.Body
 
-	case "CallExpression":
+	case "BindExpression":
+		var tmp2 struct {
+			Callee *Node `json:"callee"`
+			Object *Node `json:"object"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = []*Node{tmp2.Callee, tmp2.Object}
+
+	case "CallExpression", "NewExpression":
 		var tmp2 struct {
 			Callee    *Node
 			Arguments []*Node `json:"arguments"`
@@ -54,6 +83,45 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		}
 		n.Name = tmp2.Callee.Name
 		n.Children = tmp2.Arguments
+
+	case "Class":
+		var tmp2 struct {
+			SuperClass *Node `json:"superClass"`
+			Body       *Node `json:"body"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = []*Node{tmp2.SuperClass, tmp2.Body}
+
+	case "CatchClause":
+		var tmp2 struct {
+			Param *Node `json:"param"`
+			Body  *Node `json:"body"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = []*Node{tmp2.Param, tmp2.Body}
+
+	case "DoWhileStatement", "WhileStatement":
+		var tmp2 struct {
+			Body *Node `json:"body"`
+			Test *Node `json:"test"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = []*Node{tmp2.Body, tmp2.Test}
+
+	case "ExportAllDeclaration", "ExportDefaultDeclaration", "ExportNamedDeclaration":
+		var tmp2 struct {
+			Declaration *Node `json:"declaration"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = []*Node{tmp2.Declaration}
 
 	case "ExpressionStatement":
 		var tmp2 struct {
@@ -72,6 +140,17 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 			return err
 		}
 		n.Children = []*Node{tmp2.Program}
+
+	case "ForInStatement":
+		var tmp2 struct {
+			Left  *Node `json:"left"`
+			Right *Node `json:"right"`
+			Body  *Node `json:"body"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = []*Node{tmp2.Left, tmp2.Right, tmp2.Body}
 
 	case "ForStatement":
 		var tmp2 struct {
@@ -104,6 +183,20 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 			return err
 		}
 		n.Name = tmp2.Name
+
+	case "IfStatement":
+		var tmp2 struct {
+			Test       *Node `json:"test"`
+			Consequent *Node `json:"consequent"`
+			Alternate  *Node `json:"alternate"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = []*Node{tmp2.Test, tmp2.Consequent}
+		if tmp2.Alternate != nil {
+			n.Children = append(n.Children, tmp2.Alternate)
+		}
 
 	case "ImportDeclaration":
 		var tmp2 struct {
@@ -147,7 +240,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		n.Name = fmt.Sprintf("%s.%s", tmp2.Object.Name, tmp2.Property.Name)
 		n.Children = []*Node{tmp2.Object, tmp2.Property}
 
-	case "ReturnStatement", "UpdateExpression":
+	case "AwaitExpression", "ReturnStatement", "SpreadElement", "ThrowStatement", "UnaryExpression", "UpdateExpression", "YieldExpression":
 		var tmp2 struct {
 			Argument *Node `json:"argument"`
 		}
@@ -156,7 +249,16 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		}
 		n.Children = []*Node{tmp2.Argument}
 
-	case "StringLiteral":
+	case "ObjectExpresion":
+		var tmp2 struct {
+			Properties []*Node `json:"properties"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = tmp2.Properties
+
+	case "ObjectProperty", "StringLiteral":
 		var tmp2 struct {
 			Value string `json:"value"`
 		}
@@ -165,7 +267,97 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		}
 		n.Name = tmp2.Value
 
-	case "NumericLiteral":
+	case "SequenceExpressions", "TemplateLiteral":
+		var tmp2 struct {
+			Expressions []*Node `json:"expressions"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = tmp2.Expressions
+
+	case "SwitchCase":
+		var tmp2 struct {
+			Test       *Node   `json:"test"`
+			Consequent []*Node `json:"conseqeuent"`
+		}
+
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		if tmp2.Test != nil {
+			n.Children = []*Node{tmp2.Test}
+		}
+		n.Children = append(n.Children, tmp2.Consequent...)
+
+	case "SwitchStatement":
+		var tmp2 struct {
+			Discriminant *Node   `json:"discriminant"`
+			Cases        []*Node `json:"cases"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = []*Node{tmp2.Discriminant}
+		n.Children = append(n.Children, tmp2.Cases...)
+
+	case "TaggedTemplateExpression":
+		var tmp2 struct {
+			Tag *Node `json:"tag"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = []*Node{tmp2.Tag}
+
+	case "TryStatement":
+		var tmp2 struct {
+			Block     *Node `json:"block"`
+			Handler   *Node `json:"handler"`
+			Finalizer *Node `json:"finalizer"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = []*Node{tmp2.Block, tmp2.Handler, tmp2.Finalizer}
+
+	case "VariableDeclaration":
+		var tmp2 struct {
+			Declarations []*Node `json:"declarations"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = tmp2.Declarations
+
+	case "VariableDeclarator":
+		var tmp2 struct {
+			Init *Node `json:"init"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = []*Node{tmp2.Init}
+
+	case "WithStatement":
+		var tmp2 struct {
+			Object *Node `json:"object"`
+			Body   *Node `json:"body"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = []*Node{tmp2.Object, tmp2.Body}
+
+	case
+		"BooleanLiteral",
+		"BreakStatement",
+		"ContinueStatement",
+		"EmptyStatement",
+		"ForOfStatement",
+		"DebuggerStatement",
+		"NullLiteral",
+		"NumericLiteral":
 
 	default:
 		log.Printf("unhandled type %s", n.Type)
