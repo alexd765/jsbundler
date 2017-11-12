@@ -32,7 +32,7 @@ func (fn *Function) walk(ast *ast.Node) {
 				for _, childNode := range node.Children {
 					fn.walk(childNode)
 				}
-				fn.Calls = append(fn.Calls, Call{Name: node.Name})
+				fn.Calls = append(fn.Calls, Call{Name: node.Name, From:node.From})
 			case "FunctionDeclaration":
 				fn.Functions = append(fn.Functions, *newFunction(node))
 			}

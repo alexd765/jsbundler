@@ -37,11 +37,11 @@ func (f *File) walk(ast *ast.Node) {
 			for _, childNode := range node.Children {
 				f.walk(childNode)
 			}
-			f.Calls = append(f.Calls, Call{Name: node.Name})
+			f.Calls = append(f.Calls, Call{Name: node.Name, From: node.From})
 		case "FunctionDeclaration":
 			f.Functions = append(f.Functions, *newFunction(node))
 		case "ImportDeclaration":
-			f.Imports = append(f.Imports, Import{Name: node.Name})
+			f.Imports = append(f.Imports, Import{Name: node.Name, From: node.From})
 		}
 	}
 }

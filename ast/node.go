@@ -2,7 +2,6 @@ package ast
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 )
 
@@ -10,6 +9,7 @@ import (
 type Node struct {
 	Type     string
 	Name     string
+	From     string
 	Children []*Node
 }
 
@@ -82,6 +82,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 			return err
 		}
 		n.Name = tmp2.Callee.Name
+		n.From = tmp2.Callee.From
 		n.Children = tmp2.Arguments
 
 	case "Class":
@@ -209,7 +210,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		for _, spec := range tmp2.Specifiers {
 			n.Name += spec.Name + " "
 		}
-		n.Name += "from " + tmp2.Source.Name
+		n.From = tmp2.Source.Name
 
 	case "ImportSpecifier":
 		var tmp2 struct {
@@ -237,7 +238,8 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		if err := json.Unmarshal(b, &tmp2); err != nil {
 			return err
 		}
-		n.Name = fmt.Sprintf("%s.%s", tmp2.Object.Name, tmp2.Property.Name)
+		n.Name = tmp2.Property.Name
+		n.From = tmp2.Object.Name
 		n.Children = []*Node{tmp2.Object, tmp2.Property}
 
 	case "AwaitExpression", "ReturnStatement", "SpreadElement", "ThrowStatement", "UnaryExpression", "UpdateExpression", "YieldExpression":
