@@ -15,20 +15,20 @@ func main() {
 	flag.Parse()
 
 	if len(flag.Args()) == 0 {
-		log.Fatal("Error: Needs javascript source files as parameters.")
+		log.Fatal("err: Needs javascript source files as parameters.")
 	}
 
 	cm := callmap.New()
 
 	for _, arg := range flag.Args() {
 		if err := cm.Add(arg); err != nil {
-			log.Fatalf("Error: %s", err)
+			log.Fatalf("err: %s", err)
 		}
 	}
 
 	out, err := json.MarshalIndent(cm, "", "  ")
 	if err != nil {
-		log.Fatalf("Error: %s", err)
+		log.Fatalf("err: %s", err)
 	}
 	if *v {
 		fmt.Print(string(out))

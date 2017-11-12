@@ -1,7 +1,9 @@
 package ast
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os/exec"
 )
@@ -11,8 +13,9 @@ func ParseFile(path string) (*Node, error) {
 	log.Printf("adding '%s'", path)
 	out, err := exec.Command("babylon", path).CombinedOutput()
 	if err != nil {
-		log.Printf("err: %s", out)
-		return nil, err
+		start := bytes.Index(out, []byte("Unexpected token"))
+		length := bytes.IndexByte(out[start:], ')') + 1
+		return nil, fmt.Errorf("babylon: parsing '%s': '%s'", path, out[start:start+length])
 	}
 
 	var n Node

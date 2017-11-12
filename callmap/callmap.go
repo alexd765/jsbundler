@@ -53,7 +53,7 @@ func (c *Callmap) addDir(path string) error {
 			continue
 		}
 		if err := c.Add(filepath.Join(path, fi.Name())); err != nil {
-			log.Printf("Error parsing %s: %s", filepath.Join(path, fi.Name()), err)
+			log.Printf("err: %s", err)
 			continue
 		}
 	}
