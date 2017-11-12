@@ -95,6 +95,28 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		}
 		n.Children = []*Node{tmp2.SuperClass, tmp2.Body}
 
+	case "ClassMethod":
+		var tmp2 struct {
+			Key  *Node `json:"key"`
+			Body *Node `json:"body"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Name = tmp2.Key.Name
+		n.Children = []*Node{tmp2.Body}
+
+	case "ClassProperty":
+		var tmp2 struct {
+			Key   *Node `json:"key"`
+			Value *Node `json:"value"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Name = tmp2.Key.Name
+		n.Children = []*Node{tmp2.Value}
+
 	case "CatchClause":
 		var tmp2 struct {
 			Param *Node `json:"param"`
@@ -371,7 +393,8 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		"DebuggerStatement",
 		"NullLiteral",
 		"NumericLiteral",
-		"TypeAlias":
+		"TypeAlias",
+		"ThisExpression":
 
 	default:
 		log.Printf("unhandled type %s", n.Type)
