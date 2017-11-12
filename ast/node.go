@@ -105,6 +105,37 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		}
 		n.Name = tmp2.Name
 
+	case "ImportDeclaration":
+		var tmp2 struct {
+			Specifiers []*Node `json:"specifiers"`
+			Source     *Node   `json:"source"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		for _, spec := range tmp2.Specifiers {
+			n.Name += spec.Name + " "
+		}
+		n.Name += "from " + tmp2.Source.Name
+
+	case "ImportSpecifier":
+		var tmp2 struct {
+			Imported *Node
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Name = tmp2.Imported.Name
+
+	case "ImportDefaultSpecifier", "ImportNamespaceSpecifier":
+		var tmp2 struct {
+			Local *Node `json:"local"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Name = tmp2.Local.Name
+
 	case "MemberExpression":
 		var tmp2 struct {
 			Object   *Node `json:"object"`
@@ -124,6 +155,15 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 			return err
 		}
 		n.Children = []*Node{tmp2.Argument}
+
+	case "StringLiteral":
+		var tmp2 struct {
+			Value string `json:"value"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Name = tmp2.Value
 
 	case "NumericLiteral":
 
