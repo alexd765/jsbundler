@@ -35,7 +35,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		}
 		n.Children = []*Node{tmp2.Left, tmp2.Right}
 
-	case "ArrayExpression":
+	case "ArrayExpression", "ArrayPattern":
 		var tmp2 struct {
 			Elements []*Node `json:"elements"`
 		}
@@ -54,7 +54,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		}
 		n.Children = append(tmp2.Params, tmp2.Body)
 
-	case "BlockStatement", "DoExpression", "LabeledStatement", "Program":
+	case "BlockStatement", "ClassBody", "DoExpression", "LabeledStatement", "Program":
 		var tmp2 struct {
 			Body []*Node `json:"body"`
 		}
@@ -85,7 +85,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		n.From = tmp2.Callee.From
 		n.Children = tmp2.Arguments
 
-	case "Class":
+	case "ClassDeclaration":
 		var tmp2 struct {
 			SuperClass *Node `json:"superClass"`
 			Body       *Node `json:"body"`
@@ -242,7 +242,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		n.From = tmp2.Object.Name
 		n.Children = []*Node{tmp2.Object, tmp2.Property}
 
-	case "AwaitExpression", "ReturnStatement", "SpreadElement", "ThrowStatement", "UnaryExpression", "UpdateExpression", "YieldExpression":
+	case "AwaitExpression", "ReturnStatement", "SpreadElement", "SpreadProperty", "ThrowStatement", "UnaryExpression", "UpdateExpression", "YieldExpression":
 		var tmp2 struct {
 			Argument *Node `json:"argument"`
 		}
@@ -251,7 +251,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		}
 		n.Children = []*Node{tmp2.Argument}
 
-	case "ObjectExpresion":
+	case "ObjectExpression":
 		var tmp2 struct {
 			Properties []*Node `json:"properties"`
 		}
@@ -260,7 +260,18 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		}
 		n.Children = tmp2.Properties
 
-	case "ObjectProperty", "StringLiteral":
+	case "ObjectProperty":
+		var tmp2 struct {
+			Value interface{} `json:"value"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		if v, ok := tmp2.Value.(string); ok {
+			n.Name = v
+		}
+
+	case "StringLiteral":
 		var tmp2 struct {
 			Value string `json:"value"`
 		}
@@ -359,7 +370,8 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		"ForOfStatement",
 		"DebuggerStatement",
 		"NullLiteral",
-		"NumericLiteral":
+		"NumericLiteral",
+		"TypeAlias":
 
 	default:
 		log.Printf("unhandled type %s", n.Type)
