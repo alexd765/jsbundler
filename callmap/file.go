@@ -1,31 +1,40 @@
 package callmap
 
-import (
-	"encoding/json"
-	"fmt"
-	"log"
-	"os/exec"
-)
+import "github.com/alexd765/jsbundler/ast"
 
-type File struct{}
-
-func newFile(path string) (*File, error) {
-	log.Printf("adding '%s'", path)
-	out, err := exec.Command("babylon", path).CombinedOutput()
-	if err != nil {
-		log.Printf("err: %s", out)
-		return nil, err
-	}
-
-	var ast interface{}
-	if err := json.Unmarshal(out, &ast); err != nil {
-		return nil, err
-	}
-	walk(ast)
-
-	return nil, nil
+// File descibes a javascript file.
+type File struct {
+	Calls     []Call
+	Functions []Function
 }
 
+func newFile(path string) (*File, error) {
+	ast, err := ast.ParseFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	f := File{}
+
+	types := map[string]struct{}{
+		"CallExpression":      struct{}{},
+		"FunctionDeclaration": struct{}{},
+	}
+
+	nodes := ast.WalkTo(types)
+	for _, node := range nodes {
+		switch node.Type {
+		case "CallExpression":
+			f.Calls = append(f.Calls, Call{Name: node.Name})
+		case "FunctionDeclaration":
+			f.Functions = append(f.Functions, Function{Name: node.Name})
+		}
+	}
+
+	return &f, nil
+}
+
+/*
 func walk(node interface{}) {
 	if node == nil {
 		return
@@ -261,3 +270,4 @@ func walk(node interface{}) {
 		log.Print(n["type"])
 	}
 }
+*/
