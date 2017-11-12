@@ -25,7 +25,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 
 	switch n.Type {
 
-	case "AssignmentExpression", "BinaryExpression", "LogicalExpression":
+	case "AssignmentExpression", "AssignmentPattern", "BinaryExpression", "LogicalExpression":
 		var tmp2 struct {
 			Left  *Node `json:"left"`
 			Right *Node `json:"right"`
@@ -146,7 +146,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		}
 		n.Children = []*Node{tmp2.Declaration}
 
-	case "ExpressionStatement":
+	case "ExpressionStatement", "JSXExpressionContainer":
 		var tmp2 struct {
 			Expression *Node `json:"expression"`
 		}
@@ -198,6 +198,16 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		n.Name = tmp2.ID.Name
 		n.Children = []*Node{tmp2.Body}
 
+	case "FunctionExpression":
+		var tmp2 struct {
+			Params []*Node `json:"params"`
+			Body   *Node   `json:"body"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = append(tmp2.Params, tmp2.Body)
+
 	case "Identifier":
 		var tmp2 struct {
 			Name string `json:"name"`
@@ -207,7 +217,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		}
 		n.Name = tmp2.Name
 
-	case "IfStatement":
+	case "ConditionalExpression", "IfStatement":
 		var tmp2 struct {
 			Test       *Node `json:"test"`
 			Consequent *Node `json:"consequent"`
@@ -251,6 +261,15 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 			return err
 		}
 		n.Name = tmp2.Local.Name
+
+	case "JSXElement":
+		var tmp2 struct {
+			Children []*Node `json:"children"`
+		}
+		if err := json.Unmarshal(b, &tmp2); err != nil {
+			return err
+		}
+		n.Children = tmp2.Children
 
 	case "MemberExpression":
 		var tmp2 struct {
@@ -394,7 +413,12 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		"NullLiteral",
 		"NumericLiteral",
 		"TypeAlias",
-		"ThisExpression":
+		"ThisExpression",
+		"JSXText",
+		"JSXEmptyExpression",
+		"DeclareVariable",
+		"RegExpLiteral",
+		"InterfaceDeclaration":
 
 	default:
 		log.Printf("unhandled type %s", n.Type)
