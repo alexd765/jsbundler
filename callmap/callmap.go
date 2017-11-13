@@ -6,13 +6,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	"golang.org/x/sync/errgroup"
 )
 
-// The Callmap stores nothing yet.
+// The Callmap consists of files.
 type Callmap struct {
 	Files map[string]*File `json:"files"`
 }
@@ -60,7 +59,9 @@ func walkPath(path string, filepaths chan string) error {
 		return err
 	}
 	if !fi.IsDir() {
-		filepaths <- path
+		if ext := filepath.Ext(path); ext == ".js" || ext == ".jsx" {
+			filepaths <- path
+		}
 		return nil
 	}
 
@@ -70,14 +71,7 @@ func walkPath(path string, filepaths chan string) error {
 	}
 
 	for _, childFi := range fis {
-		name := childFi.Name()
-		if strings.HasPrefix(name, ".") && name != "." {
-			continue
-		}
-		if ext := filepath.Ext(name); ext != "" && ext != ".js" && ext != ".jsx" {
-			continue
-		}
-		if err := walkPath(filepath.Join(path, name), filepaths); err != nil {
+		if err := walkPath(filepath.Join(path, childFi.Name()), filepaths); err != nil {
 			return err
 		}
 	}
