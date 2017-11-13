@@ -85,7 +85,7 @@ func (n *Node) UnmarshalJSON(b []byte) error {
 		n.From = tmp2.Callee.From
 		n.Children = tmp2.Arguments
 
-	case "ClassDeclaration":
+	case "ClassDeclaration", "ClassExpression":
 		var tmp2 struct {
 			SuperClass *Node `json:"superClass"`
 			Body       *Node `json:"body"`
