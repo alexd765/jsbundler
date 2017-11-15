@@ -1,3 +1,4 @@
 *.test
 /.vscode
 /cmd/callmap/callmap
+/packages/callmap/node_modules
